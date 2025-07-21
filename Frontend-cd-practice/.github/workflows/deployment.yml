@@ -1,0 +1,44 @@
+# .github/workflows/deployment.yml
+name: Build and Deploy the ReactJS App
+
+# Only do deployment if a new commit is pushed to 
+# the main or master branches. You could probably just use main,
+# but older repos may still say "master" as their default branch.
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Load a copy of the repository's latest commit
+      - uses: actions/checkout@v4
+
+      # Install the ReactJS project's dependencies, including dev dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Run any available tests, if the test command is available
+      - name: Run tests
+        run: npm run test --if-present
+
+      # Build the ReactJS app
+      - name: Build the ReactJS app
+        run: npm run build
+      
+      # Log the output of the build
+      # This varies depending on your ReactJS build tool
+      # e.g. Vite builds ReactJS apps to a "dist" folder
+      - name: Confirm the build output exists
+        run: ls ./dist/
+
+      # Use the "Push git subdirectory as branch" action listed above
+      # We are using the `dist/` folder created by the build step as the target folder directory
+      - name: Deploy
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: gh-pages
+          FOLDER: dist
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
